@@ -1,0 +1,42 @@
+workflows:
+  ios-release:
+    name: VNPlayer iOS Release
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.example.vnplayer
+      vars:
+        APP_STORE_APPLE_ID: "YOUR_APPLE_APP_ID"
+    integrations:
+      app_store_connect: codemagic
+    scripts:
+      - name: Resolve signing files
+        script: xcode-project use-profiles
+      - name: Build archive
+        script: |
+          xcodebuild \
+            -project VNPlayer.xcodeproj \
+            -scheme VNPlayer \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/VNPlayer.xcarchive \
+            archive
+      - name: Export IPA
+        script: |
+          xcode-project build-ipa \
+            --project VNPlayer.xcodeproj \
+            --scheme VNPlayer
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/*.xcarchive
+    publishing:
+      email:
+        recipients:
+          - "$CM_EMAIL"
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
