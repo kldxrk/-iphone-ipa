@@ -1,0 +1,67 @@
+# 两个工作流：
+#  1) ios-unsigned  —— 不需要付费开发者账号。产出未签名 IPA，再用 Sideloadly / AltStore 用你自己的 Apple ID 重签安装（免费账号 7 天有效）。
+#  2) ios-testflight —— 需要付费 Apple Developer 账号（$99/年），签名后上传 TestFlight。
+#
+# Xcode 版本：液态玻璃 API 需要 Xcode 26+（Swift 6.2 / iOS 26 SDK）。
+# 源码用了 #if compiler(>=6.2) 双层门禁，所以旧 Xcode 也能编译，只是没有真玻璃效果。
+# 想要真玻璃请确保构建机的 Xcode 是 26 及以上（latest 通常已满足）。
+workflows:
+  ios-unsigned:
+    name: VNPlayer 未签名 IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      xcode: latest
+    scripts:
+      - name: Build (no code signing)
+        script: |
+          set -e
+          xcodebuild \
+            -project VNPlayer.xcodeproj \
+            -scheme VNPlayer \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+      - name: Package IPA
+        script: |
+          set -e
+          APP="build/Build/Products/Release-iphoneos/VNPlayer.app"
+          test -d "$APP"
+          rm -rf Payload VNPlayer-unsigned.ipa
+          mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry VNPlayer-unsigned.ipa Payload
+          ls -la VNPlayer-unsigned.ipa
+    artifacts:
+      - VNPlayer-unsigned.ipa
+
+  ios-testflight:
+    name: VNPlayer TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.example.vnplayer   # 改成你自己的唯一 ID，并同步改 pbxproj 里的 PRODUCT_BUNDLE_IDENTIFIER
+    integrations:
+      app_store_connect: codemagic                # 必须与 Codemagic「Integrations」里 App Store Connect 密钥的名称一致
+    scripts:
+      - name: Set build number
+        script: agvtool new-version -all $(($BUILD_NUMBER + 1))
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Build signed IPA
+        script: |
+          xcode-project build-ipa \
+            --project VNPlayer.xcodeproj \
+            --scheme VNPlayer
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

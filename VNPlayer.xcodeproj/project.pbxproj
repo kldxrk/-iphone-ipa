@@ -1,0 +1,93 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* VNPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* VNPlayerApp.swift */; };
+		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* ContentView.swift */; };
+		A10000000000000000000003 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* PlayerView.swift */; };
+		A10000000000000000000004 /* PlayerSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* PlayerSheets.swift */; };
+		A10000000000000000000005 /* VNRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* VNRuntime.swift */; };
+		A10000000000000000000006 /* VNModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* VNModels.swift */; };
+		A10000000000000000000007 /* ScriptParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* ScriptParser.swift */; };
+		A10000000000000000000008 /* AssetLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* AssetLoader.swift */; };
+		A10000000000000000000009 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* AudioManager.swift */; };
+		A1000000000000000000000A /* GameLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000000A /* GameLibrary.swift */; };
+		A1000000000000000000000B /* SaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000000B /* SaveManager.swift */; };
+		A1000000000000000000000C /* ArchiveProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000000C /* ArchiveProvider.swift */; };
+		A1000000000000000000000D /* Demo in Resources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000000D /* Demo */; };
+		A1000000000000000000000E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1000000000000000000000E /* Assets.xcassets */; };
+		A1000000000000000000000F /* GlassStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* GlassStyle.swift */; };
+		A10000000000000000000010 /* XP3Archive.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000011 /* XP3Archive.swift */; };
+		A10000000000000000000011 /* DiagnosticsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000012 /* DiagnosticsSheet.swift */; };
+		A10000000000000000000012 /* TestXP3 in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000013 /* TestXP3 */; };
+/* End PBXBuildFile section */
+
+/* PBXFileReference section */
+		B10000000000000000000001 /* VNPlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VNPlayerApp.swift; sourceTree = "<group>"; };
+		B10000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B10000000000000000000003 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* PlayerSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSheets.swift; sourceTree = "<group>"; };
+		B10000000000000000000005 /* VNRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VNRuntime.swift; sourceTree = "<group>"; };
+		B10000000000000000000006 /* VNModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VNModels.swift; sourceTree = "<group>"; };
+		B10000000000000000000007 /* ScriptParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptParser.swift; sourceTree = "<group>"; };
+		B10000000000000000000008 /* AssetLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetLoader.swift; sourceTree = "<group>"; };
+		B10000000000000000000009 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		B1000000000000000000000A /* GameLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameLibrary.swift; sourceTree = "<group>"; };
+		B1000000000000000000000B /* SaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveManager.swift; sourceTree = "<group>"; };
+		B1000000000000000000000C /* ArchiveProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveProvider.swift; sourceTree = "<group>"; };
+		B1000000000000000000000D /* Demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Demo; sourceTree = "<group>"; };
+		B1000000000000000000000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B1000000000000000000000F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C10000000000000000000001 /* VNPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VNPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000010 /* GlassStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStyle.swift; sourceTree = "<group>"; };
+		B10000000000000000000011 /* XP3Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XP3Archive.swift; sourceTree = "<group>"; };
+		B10000000000000000000012 /* DiagnosticsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsSheet.swift; sourceTree = "<group>"; };
+		B10000000000000000000013 /* TestXP3 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = TestXP3; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D10000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E10000000000000000000003 = {isa = PBXGroup; children = (E10000000000000000000001,E10000000000000000000002,E10000000000000000000004); sourceTree = "<group>"; };
+		E10000000000000000000001 /* VNPlayer */ = {isa = PBXGroup; children = (B10000000000000000000001,B10000000000000000000002,B10000000000000000000003,B10000000000000000000004,B10000000000000000000005,B10000000000000000000006,B10000000000000000000007,B10000000000000000000008,B10000000000000000000009,B1000000000000000000000A,B1000000000000000000000B,B1000000000000000000000C,B1000000000000000000000F,B10000000000000000000010,B10000000000000000000011,B10000000000000000000012); path = Sources/VNPlayer; sourceTree = "<group>"; };
+		E10000000000000000000002 /* Resources */ = {isa = PBXGroup; children = (B1000000000000000000000D,B1000000000000000000000E,B10000000000000000000013); path = Resources; sourceTree = "<group>"; };
+		E10000000000000000000004 /* Products */ = {isa = PBXGroup; children = (C10000000000000000000001); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F10000000000000000000001 /* VNPlayer */ = {isa = PBXNativeTarget; buildConfigurationList = F30000000000000000000001; buildPhases = (D10000000000000000000003,D10000000000000000000001,D10000000000000000000002); buildRules = (); dependencies = (); name = VNPlayer; productName = VNPlayer; productReference = C10000000000000000000001; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F20000000000000000000001 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1600; TargetAttributes = {F10000000000000000000001 = {CreatedOnToolsVersion = 16.0;};};}; buildConfigurationList = F40000000000000000000001; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en,Base); mainGroup = E10000000000000000000003; productRefGroup = E10000000000000000000004; projectDirPath = ""; projectRoot = ""; targets = (F10000000000000000000001); };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D10000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A1000000000000000000000D,A1000000000000000000000E,A10000000000000000000012); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D10000000000000000000003 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001,A10000000000000000000002,A10000000000000000000003,A10000000000000000000004,A10000000000000000000005,A10000000000000000000006,A10000000000000000000007,A10000000000000000000008,A10000000000000000000009,A1000000000000000000000A,A1000000000000000000000B,A1000000000000000000000C,A1000000000000000000000F,A10000000000000000000010,A10000000000000000000011); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F50000000000000000000001 /* Debug (project) */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SWIFT_VERSION = 5.0; VERSIONING_SYSTEM = "apple-generic"; CURRENT_PROJECT_VERSION = 1; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_TESTABILITY = YES; ONLY_ACTIVE_ARCH = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG; }; name = Debug; };
+		F50000000000000000000002 /* Release (project) */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SWIFT_VERSION = 5.0; VERSIONING_SYSTEM = "apple-generic"; CURRENT_PROJECT_VERSION = 1; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; SWIFT_COMPILATION_MODE = wholemodule; VALIDATE_PRODUCT = YES; }; name = Release; };
+		F50000000000000000000003 /* Debug (target) */ = {isa = XCBuildConfiguration; buildSettings = {PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.example.vnplayer; MARKETING_VERSION = 1.1; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_FILE = Sources/VNPlayer/Info.plist; ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; TARGETED_DEVICE_FAMILY = "1,2"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; CODE_SIGN_STYLE = Automatic; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks"); INFOPLIST_KEY_CFBundleDisplayName = VNPlayer; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; SWIFT_EMIT_LOC_STRINGS = YES; }; name = Debug; };
+		F50000000000000000000004 /* Release (target) */ = {isa = XCBuildConfiguration; buildSettings = {PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.example.vnplayer; MARKETING_VERSION = 1.1; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_FILE = Sources/VNPlayer/Info.plist; ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; TARGETED_DEVICE_FAMILY = "1,2"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; CODE_SIGN_STYLE = Automatic; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks"); INFOPLIST_KEY_CFBundleDisplayName = VNPlayer; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; SWIFT_EMIT_LOC_STRINGS = YES; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F30000000000000000000001 /* Build configuration list for PBXNativeTarget "VNPlayer" */ = {isa = XCConfigurationList; buildConfigurations = (F50000000000000000000003,F50000000000000000000004); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		F40000000000000000000001 /* Build configuration list for PBXProject "VNPlayer" */ = {isa = XCConfigurationList; buildConfigurations = (F50000000000000000000001,F50000000000000000000002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = F20000000000000000000001 /* Project object */;
+}

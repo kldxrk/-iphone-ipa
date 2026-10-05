@@ -1,0 +1,30 @@
+@title 示例游戏：放学后
+# 这是 VNPlayer 的示例脚本，可以照着它写自己的游戏。
+@bgm bgm_theme.wav
+@bg bg_school.jpg
+放学的铃声响起，教学楼里渐渐安静下来。
+@show alice char_alice.png center
+[爱丽丝] 咦，你还没回去吗？
+[爱丽丝] 我正打算去天台看夕阳，要不要一起？
+@choice 好啊，一起去=roof 今天还有事，下次吧=home
+
+@label roof
+@se se_click.wav
+@bg bg_roof.jpg
+@show alice char_alice.png left
+天台的风有些凉，夕阳把整片天空染成了橘红色。
+[爱丽丝] 你看，今天的夕阳特别漂亮。
+[爱丽丝] 能和你一起看到，真好。
+@jump ending
+
+@label home
+@hide alice
+你向她挥了挥手，转身走向楼梯口。
+背后传来轻轻的一声：“明天见。”
+
+@label ending
+@hide all
+@bgm stop
+——示例到此结束——
+这个示例演示了背景、立绘、音乐、音效、选项和分支。\n点击“退出”回到游戏库，或点“重新开始”再玩一遍。
+@end
