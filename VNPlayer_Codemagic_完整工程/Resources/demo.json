@@ -1,9 +1,0 @@
-{
-  "id": "demo",
-  "title": "Demo Visual Novel",
-  "scenes": [
-    {"id":"start","background":"background_demo","speaker":"系统","text":"这是 iOS 视觉小说运行时测试场景。"},
-    {"id":"hello","background":"background_demo","speaker":"角色A","text":"资源、对话、存档和触摸操作由运行时统一管理。"},
-    {"id":"end","background":"background_demo","speaker":"角色A","text":"以后可以在这里接入合法的具体游戏引擎。"}
-  ]
-}
