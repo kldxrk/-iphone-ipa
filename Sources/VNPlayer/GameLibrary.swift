@@ -163,7 +163,9 @@ enum GameStore {
         }
 
         var candidates: [URL] = []
-        if let scriptDir = [folder] + subs
+        // 注意括号：`.first` 的优先级高于 `+`，写成 `[folder] + subs.first(...)` 会被解析成
+        // `[URL] + URL?`，直接编译失败（这里踩过一次）。
+        if let scriptDir = ([folder] + subs)
             .first(where: { FileManager.default.fileExists(atPath: $0.appendingPathComponent("script.vns").path) }) {
             candidates += archives(in: scriptDir)
         }

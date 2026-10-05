@@ -33,6 +33,7 @@ LIST_RE = re.compile(r"(\w+)\s*=\s*\((.*?)\);", re.S)
 ISA_RE = re.compile(r"isa\s*=\s*(\w+)")
 
 problems: list[str] = []
+checked = 0          # 模块级：闭包里要用 global 才能改
 
 
 def fail(msg: str) -> None:
@@ -163,6 +164,53 @@ def main(path: Path) -> int:
 
     print(f"对象定义 {len(defined)} 个：{Counter(isa_by_id.values())}")
     print(f"Sources 阶段编译 {len(in_sources)} 个文件；Resources 阶段 {len(in_resources)} 个资源")
+
+    # ---- 4. 引用到的文件是否真的在工程目录里 ----
+    # 只验证结构是不够的：新加的文件若没被复制进仓库，Xcode 会报 "cannot find in scope"，
+    # 而 pbxproj 本身完全合法。
+    root = path.parent.parent
+    groups: dict[str, tuple[str, list[str]]] = {}
+    for gid, isa in isa_by_id.items():
+        if isa != "PBXGroup":
+            continue
+        m = re.search(rf"^\s*{gid}\s*/\*.*?\*/\s*=\s*\{{isa = PBXGroup;(.*?)\}};", text, re.M | re.S)
+        if not m:
+            continue
+        body = m.group(1)
+        gpath = re.search(r"path\s*=\s*([^;]+);", body)
+        children = re.search(r"children\s*=\s*\((.*?)\);", body, re.S)
+        groups[gid] = (gpath.group(1).strip() if gpath else "",
+                       ID_RE.findall(children.group(1)) if children else [])
+
+    missing: list[str] = []
+
+    def resolve(fid: str, prefix: str) -> None:
+        global checked
+        m = re.search(rf"^\s*{fid}\s*/\*.*?\*/\s*=\s*\{{isa = PBXFileReference;(.*?)\}};", text, re.M | re.S)
+        if not m:
+            return
+        body = m.group(1)
+        if "BUILT_PRODUCTS_DIR" in body:
+            return
+        name = re.search(r"path\s*=\s*([^;]+);", body)
+        if not name:
+            return
+        relative = str(Path(prefix) / name.group(1).strip().strip('"')) if prefix else name.group(1).strip().strip('"')
+        checked += 1
+        if not (root / relative).exists():
+            missing.append(relative)
+        if fid in groups:
+            child_prefix, child_ids = groups[fid]
+            for child in child_ids:
+                resolve(child, str(Path(relative) / child_prefix) if child_prefix else relative)
+
+    for gid, (gpath, children) in groups.items():
+        for child in children:
+            resolve(child, gpath)
+
+    for relative in missing:
+        fail(f"pbxproj 引用了不存在的文件：{relative}（没被复制进仓库？）")
+    print(f"检查了 {checked} 个文件引用，缺失 {len(missing)} 个")
 
     if problems:
         print("\n发现 %d 个问题：" % len(problems))
