@@ -7,6 +7,30 @@ struct ContentView: View {
     @State private var activeGame: VNGameInfo?
     @State private var showImporter = false
     @State private var inspection: Inspection?
+    @State private var deleteTarget: DeleteTarget?
+
+    /// 删除操作统一走确认对话框：以前导入进来又认不出来的东西根本没有入口能删掉。
+    private enum DeleteTarget: Identifiable {
+        case game(VNGameInfo)
+        case unsupported(GameLibrary.UnsupportedGame)
+        case allImported
+
+        var id: String {
+            switch self {
+            case .game(let game): return "game-" + game.id
+            case .unsupported(let item): return "unsupported-" + item.folder.path
+            case .allImported: return "all-imported"
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .game(let game): return game.title
+            case .unsupported(let item): return item.name
+            case .allImported: return "全部导入的数据"
+            }
+        }
+    }
 
     private struct Inspection: Identifiable {
         let id = UUID()
@@ -47,21 +71,83 @@ struct ContentView: View {
 
                         if !library.unsupported.isEmpty {
                             sectionTitle("无法识别")
-                            VStack(alignment: .leading, spacing: 10) {
-                                ForEach(library.unsupported, id: \.self) { reason in
-                                    HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                ForEach(library.unsupported) { item in
+                                    HStack(alignment: .top, spacing: 10) {
                                         Image(systemName: "exclamationmark.triangle")
                                             .foregroundStyle(.orange)
-                                            .padding(.top, 1)
-                                        Text(reason)
-                                            .font(.footnote)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.top, 2)
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text(item.name).font(.subheadline.weight(.semibold))
+                                            Text(item.reason)
+                                                .font(.footnote)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                                        // 真实 KR 游戏大多落在这里：先让用户拿到"要哪条路线"的结论
+                                        Button {
+                                            let report = CompatibilityAnalyzer.analyze(
+                                                folder: item.folder,
+                                                archiveURL: GameStore.archiveCandidate(in: item.folder))
+                                            inspection = Inspection(title: "兼容性报告：\(item.name)",
+                                                                    items: report.diagnostics)
+                                        } label: {
+                                            Label("体检", systemImage: "stethoscope")
+                                                .font(.footnote)
+                                                .labelStyle(.titleAndIcon)
+                                        }
+                                        .buttonStyle(.plain)
+
+                                        Button {
+                                            deleteTarget = .unsupported(item)
+                                        } label: {
+                                            Image(systemName: "trash").font(.footnote)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .foregroundStyle(.red)
                                     }
                                 }
                             }
                             .padding(16)
                             .glassSurface(cornerRadius: GlassMetrics.card)
                         }
+
+                        sectionTitle("存储管理")
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Label("导入的数据（ImportedGames）", systemImage: "square.and.arrow.down")
+                                Spacer()
+                                Text(CompatibilityReport.sizeText(library.importedBytes))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .font(.footnote)
+
+                            HStack {
+                                Label("自己放进来的（Games）", systemImage: "folder")
+                                Spacer()
+                                Text(CompatibilityReport.sizeText(library.gamesBytes))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .font(.footnote)
+
+                            Button(role: .destructive) {
+                                deleteTarget = .allImported
+                            } label: {
+                                Label("清空导入的数据", systemImage: "trash")
+                                    .font(.footnote)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.red)
+                            .disabled(library.importedBytes == 0)
+
+                            Text("导入的游戏存在 ImportedGames 目录，和你用「文件」App 放进 Games 的分开；长按卡片或点垃圾桶都能删除单个游戏。")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .glassSurface(cornerRadius: GlassMetrics.card)
 
                         sectionTitle("如何添加游戏")
                         Text(helpText)
@@ -118,6 +204,16 @@ struct ContentView: View {
         .sheet(item: $inspection) { item in
             DiagnosticsSheet(title: item.title, diagnostics: item.items)
         }
+        .confirmationDialog("确认删除「\(deleteTarget?.title ?? "")」？",
+                            isPresented: Binding(get: { deleteTarget != nil },
+                                                 set: { if !$0 { deleteTarget = nil } }),
+                            titleVisibility: .visible,
+                            presenting: deleteTarget) { target in
+            Button("删除", role: .destructive) { performDelete(target) }
+            Button("取消", role: .cancel) { deleteTarget = nil }
+        } message: { target in
+            Text(deleteMessage(target))
+        }
     }
 
     // MARK: - 组件
@@ -137,7 +233,16 @@ struct ContentView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(game.title).font(.headline)
-                Text(game.sourceLabel).font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Text(game.sourceLabel).font(.caption).foregroundStyle(.secondary)
+                    if game.isImported {
+                        Text("导入")
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Color.accentColor.opacity(0.25), in: Capsule())
+                    }
+                }
             }
 
             Spacer(minLength: 8)
@@ -159,10 +264,28 @@ struct ContentView: View {
         .onTapGesture { start(game) }
         .contextMenu {
             if !game.isBuiltIn {
-                Button(role: .destructive) { library.delete(game) } label: {
+                Button(role: .destructive) { deleteTarget = .game(game) } label: {
                     Label("删除", systemImage: "trash")
                 }
             }
+        }
+    }
+
+    private func performDelete(_ target: DeleteTarget) {
+        switch target {
+        case .game(let game): library.delete(game)
+        case .unsupported(let item): library.delete(item)
+        case .allImported: library.clearImported()
+        }
+        deleteTarget = nil
+    }
+
+    private func deleteMessage(_ target: DeleteTarget) -> String {
+        switch target {
+        case .game, .unsupported:
+            return "会同时删掉素材与这个游戏的存档，无法恢复。"
+        case .allImported:
+            return "会删掉所有通过「导入」拷进来的游戏及其存档；你自己用「文件」App 放进 Games 的不会被删。"
         }
     }
 

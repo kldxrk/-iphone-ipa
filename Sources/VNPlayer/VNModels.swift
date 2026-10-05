@@ -92,9 +92,11 @@ struct VNGameInfo: Identifiable, Hashable {
     let scriptPath: String
     let folder: URL?
     let isBuiltIn: Bool
+    /// 是否由 App 的「导入」功能拷进来的（与用户自己用「文件」App 放进去的分开存放）。
+    let isImported: Bool
 
     init(id: String, title: String, root: URL, archive: URL? = nil, scriptPath: String = "script.vns",
-         folder: URL?, isBuiltIn: Bool) {
+         folder: URL?, isBuiltIn: Bool, isImported: Bool = false) {
         self.id = id
         self.title = title
         self.root = root
@@ -102,6 +104,7 @@ struct VNGameInfo: Identifiable, Hashable {
         self.scriptPath = scriptPath
         self.folder = folder
         self.isBuiltIn = isBuiltIn
+        self.isImported = isImported
     }
 
     /// 界面上用来描述素材来源的短文本。

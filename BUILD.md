@@ -51,6 +51,7 @@ python tools/check_pbxproj.py VNPlayer.xcodeproj/project.pbxproj   # 工程文�
 python tools/ref_script_parser.py                                   # 脚本解析逻辑的等价移植 + 测试集
 python tools/xp3_toolkit.py                                         # XP3 读写往返测试（含畸形与恶意样本）
 python tools/ref_game_detect.py                                     # 游戏探测逻辑（目录 / 封包 / 两者并存）
+python tools/ref_compat_report.py                                   # 兼容性报告判定（"该走哪条路线"的结论逻辑）
 python tools/make_test_game.py Resources/TestXP3                    # 重新生成内置的 XP3 自检包
 python tools/xp3_verify_independent.py Resources/TestXP3/data.xp3   # 用独立实现交叉验证自检包是否合规
 ```

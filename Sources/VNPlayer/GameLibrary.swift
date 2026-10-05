@@ -16,13 +16,41 @@ enum GameStore {
             .appendingPathComponent("Games", isDirectory: true)
     }
 
+    /// App「导入」功能专用的目录：与用户自己用「文件」App 拷进 Games 的东西分开存放，
+    /// 这样既能一眼分清来源，也能整体一键清空，不会误删自己整理好的游戏。
+    static var importedDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("ImportedGames", isDirectory: true)
+    }
+
     static func prepare() {
         let fm = FileManager.default
         try? fm.createDirectory(at: gamesDirectory, withIntermediateDirectories: true)
+        try? fm.createDirectory(at: importedDirectory, withIntermediateDirectories: true)
         let readme = gamesDirectory.appendingPathComponent("使用说明.txt")
         if !fm.fileExists(atPath: readme.path) {
             try? readmeText.write(to: readme, atomically: true, encoding: .utf8)
         }
+    }
+
+    /// 目录占用体积，用于「存储管理」显示。
+    static func size(of directory: URL) -> Int {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(at: directory,
+                                             includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
+                                             options: [.skipsHiddenFiles]) else { return 0 }
+        var total = 0
+        for case let item as URL in enumerator {
+            guard let values = try? item.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey]),
+                  values.isDirectory != true, let fileSize = values.fileSize else { continue }
+            total += fileSize
+        }
+        return total
+    }
+
+    static func remove(_ folder: URL, gameId: String) {
+        try? FileManager.default.removeItem(at: folder)
+        SaveManager().deleteAll(gameId: gameId)
     }
 
     static func isDirectory(_ url: URL) -> Bool {
@@ -102,9 +130,10 @@ enum GameStore {
                 title = nil
             }
 
-            // 既没有外部脚本、包里也找不到脚本 → 这个游戏没法玩，但要说明原因
+            // 既没有外部脚本、包里也找不到脚本 → 这个游戏没法玩，但要说明"里面到底是什么"，
+            // 否则用户只看到一句"没有脚本"，无法判断这包是原版 KiriKiri 游戏还是别的什么。
             if entry == nil, scriptDirectory == nil {
-                return (nil, "\(archiveURL.lastPathComponent)：包内没有 .vns 脚本")
+                return (nil, "\(archiveURL.lastPathComponent)：包内没有 .vns 脚本（\(archive.count) 个文件：\(inventory(archive))）")
             }
 
             let scriptPath = scriptDirectory != nil ? "script.vns" : (entry?.name ?? "script.vns")
@@ -120,6 +149,48 @@ enum GameStore {
             }
             return (nil, "\(archiveURL.lastPathComponent)：\(error.localizedDescription)")
         }
+    }
+
+    /// 按与 detect() 相同的优先级找出封包，供兼容性体检使用。
+    static func archiveCandidate(in folder: URL) -> URL? {
+        let subs = subdirectories(of: folder)
+
+        func archives(in directory: URL) -> [URL] {
+            let items = (try? FileManager.default.contentsOfDirectory(
+                at: directory, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
+            return items.filter { $0.pathExtension.lowercased() == "xp3" }
+                .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        }
+
+        var candidates: [URL] = []
+        if let scriptDir = [folder] + subs
+            .first(where: { FileManager.default.fileExists(atPath: $0.appendingPathComponent("script.vns").path) }) {
+            candidates += archives(in: scriptDir)
+        }
+        candidates += archives(in: folder)
+        for sub in subs { candidates += archives(in: sub) }
+        var seen = Set<String>()
+        return candidates.first { seen.insert($0.resolvingSymlinksInPath().path).inserted }
+    }
+
+    /// 包内没有我们的脚本时，给一句话内容清单（按扩展名统计），
+    /// 让用户一眼看出这是"原版 KiriKiri 游戏"还是"只是没放脚本"。
+    static func inventory(_ archive: XP3Archive) -> String {
+        var counts: [String: Int] = [:]
+        for entry in archive.entries {
+            let ext = (entry.name as NSString).pathExtension.lowercased()
+            counts[ext.isEmpty ? "无扩展名" : "." + ext, default: 0] += 1
+        }
+        let top = counts.sorted { ($0.value, $1.key) > ($1.value, $0.key) }.prefix(6)
+        let list = top.map { "\($0.key)×\($0.value)" }.joined(separator: "、")
+        let scripts = archive.entries.filter {
+            let ext = ($0.name as NSString).pathExtension.lowercased()
+            return ext == "ks" || ext == "tjs"
+        }.count
+        if scripts > 0 {
+            return list + "；其中 \(scripts) 个 .ks/.tjs——看起来是原版 KiriKiri 脚本，需要 TJS2/KAG3 引擎才能执行"
+        }
+        return list
     }
 
     /// 包内优先找 script.vns，其次任意 .vns（取路径最短的，避免命中备份文件）。
@@ -157,7 +228,8 @@ enum GameStore {
     static func importFolder(_ src: URL) throws {
         let fm = FileManager.default
         prepare()
-        let dest = gamesDirectory.appendingPathComponent(src.lastPathComponent, isDirectory: true)
+        // 导入的东西一律进 ImportedGames，不跟用户自己拷进 Games 的混在一起
+        let dest = importedDirectory.appendingPathComponent(src.lastPathComponent, isDirectory: true)
         if src.resolvingSymlinksInPath().path == dest.resolvingSymlinksInPath().path { return }
         if fm.fileExists(atPath: dest.path) { try fm.removeItem(at: dest) }
         try fm.copyItem(at: src, to: dest)
@@ -217,10 +289,22 @@ enum GameStore {
 
 @MainActor
 final class GameLibrary: ObservableObject {
+    /// 认不出来但值得给用户一个"为什么"的条目：保留文件夹 URL，这样才能对它跑兼容性体检、也才能删掉。
+    struct UnsupportedGame: Identifiable {
+        let id = UUID()
+        let name: String
+        let folder: URL
+        let reason: String
+        let isImported: Bool
+    }
+
     @Published private(set) var games: [VNGameInfo] = []
-    @Published private(set) var unsupported: [String] = []
+    @Published private(set) var unsupported: [UnsupportedGame] = []
     @Published private(set) var isImporting = false
     @Published private(set) var message: String?
+    /// 「存储管理」用的统计
+    @Published private(set) var importedBytes = 0
+    @Published private(set) var gamesBytes = 0
 
     init() {
         GameStore.prepare()
@@ -243,28 +327,47 @@ final class GameLibrary: ObservableObject {
                                        folder: nil, isBuiltIn: true))
             }
         }
-        var bad: [String] = []
-        let fm = FileManager.default
-        let dirs = (try? fm.contentsOfDirectory(at: GameStore.gamesDirectory,
-                                                includingPropertiesForKeys: [.isDirectoryKey],
-                                                options: [.skipsHiddenFiles])) ?? []
-        for d in dirs.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-            guard GameStore.isDirectory(d) else { continue }
-            let detected = GameStore.detect(in: d)
-            guard let game = detected.game else {
-                bad.append("\(d.lastPathComponent)：\(detected.unsupportedReason ?? "无法识别")")
-                continue
+        var bad: [UnsupportedGame] = []
+
+        // 两个目录都扫：ImportedGames（App 导入的）与 Games（用户自己放进去的）
+        func scan(_ directory: URL, isImported: Bool) {
+            let items = (try? FileManager.default.contentsOfDirectory(
+                at: directory, includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles])) ?? []
+            for d in items.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+                guard GameStore.isDirectory(d) else { continue }
+                let detected = GameStore.detect(in: d)
+                guard let game = detected.game else {
+                    bad.append(UnsupportedGame(name: d.lastPathComponent, folder: d,
+                                               reason: detected.unsupportedReason ?? "无法识别",
+                                               isImported: isImported))
+                    continue
+                }
+                list.append(VNGameInfo(id: "user-" + GameStore.stableID(for: d),
+                                       title: game.title ?? d.lastPathComponent,
+                                       root: game.root,
+                                       archive: game.archive,
+                                       scriptPath: game.scriptPath,
+                                       folder: d,
+                                       isBuiltIn: false,
+                                       isImported: isImported))
             }
-            list.append(VNGameInfo(id: "user-" + GameStore.stableID(for: d),
-                                   title: game.title ?? d.lastPathComponent,
-                                   root: game.root,
-                                   archive: game.archive,
-                                   scriptPath: game.scriptPath,
-                                   folder: d,
-                                   isBuiltIn: false))
         }
+        scan(GameStore.importedDirectory, isImported: true)
+        scan(GameStore.gamesDirectory, isImported: false)
+
         games = list
         unsupported = bad
+
+        // 体积统计要在后台算：库大的时候全目录枚举会卡住界面
+        Task.detached(priority: .utility) {
+            let imported = GameStore.size(of: GameStore.importedDirectory)
+            let mine = GameStore.size(of: GameStore.gamesDirectory)
+            await MainActor.run {
+                self.importedBytes = imported
+                self.gamesBytes = mine
+            }
+        }
     }
 
     func importFolder(_ url: URL) {
@@ -296,8 +399,27 @@ final class GameLibrary: ObservableObject {
 
     func delete(_ game: VNGameInfo) {
         guard !game.isBuiltIn, let folder = game.folder else { return }
-        try? FileManager.default.removeItem(at: folder)
-        SaveManager().deleteAll(gameId: game.id)
+        GameStore.remove(folder, gameId: game.id)
+        report("已删除：\(game.title)")
+        refresh()
+    }
+
+    /// 删掉一个「认不出来」的条目。1.2 之前这里完全没有入口——导入错了就永远清不掉。
+    func delete(_ item: UnsupportedGame) {
+        GameStore.remove(item.folder, gameId: "user-" + GameStore.stableID(for: item.folder))
+        report("已删除：\(item.name)")
+        refresh()
+    }
+
+    /// 一键清空所有通过「导入」拷进来的东西。用户自己放进 Games 的不受影响。
+    func clearImported() {
+        let items = (try? FileManager.default.contentsOfDirectory(
+            at: GameStore.importedDirectory, includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles])) ?? []
+        for item in items {
+            GameStore.remove(item, gameId: "user-" + GameStore.stableID(for: item))
+        }
+        report("已清空导入的数据（\(items.count) 项）")
         refresh()
     }
 }

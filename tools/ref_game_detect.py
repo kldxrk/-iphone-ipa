@@ -18,7 +18,7 @@ from tempfile import TemporaryDirectory
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).parent))
-from xp3_toolkit import Entry, XP3Archive, write_xp3  # noqa: E402
+from xp3_toolkit import Entry, XP3Archive, _split_ext, write_xp3  # noqa: E402
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -74,6 +74,21 @@ def _choose_script(archive: XP3Archive):
     return candidates[0] if candidates else None
 
 
+def _inventory(archive: XP3Archive) -> str:
+    """与 GameStore.inventory 等价：按扩展名统计，让用户看出这是什么包。"""
+    counts: dict[str, int] = {}
+    for entry in archive.entries:
+        name = entry.name.rsplit("/", 1)[-1]
+        ext = _split_ext(name)[1]
+        counts["无扩展名" if not ext else "." + ext] = counts.get("无扩展名" if not ext else "." + ext, 0) + 1
+    top = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:6]
+    listing = "、".join(f"{k}×{v}" for k, v in top)
+    scripts = sum(1 for e in archive.entries if _split_ext(e.name.rsplit("/", 1)[-1])[1] in ("ks", "tjs"))
+    if scripts:
+        return listing + f"；其中 {scripts} 个 .ks/.tjs——看起来是原版 KiriKiri 脚本，需要 TJS2/KAG3 引擎才能执行"
+    return listing
+
+
 def detect(folder: Path) -> tuple[Detected | None, str | None]:
     subs = _subdirs(folder)
 
@@ -120,7 +135,8 @@ def detect(folder: Path) -> tuple[Detected | None, str | None]:
             title = _title_in(archive.read(entry.name).decode("utf-8", errors="replace")) if entry else None
 
         if entry is None and script_directory is None:
-            return (None, f"{archive_url.name}：包内没有 .vns 脚本")
+            return (None, f"{archive_url.name}：包内没有 .vns 脚本"
+                         f"（{len(archive.entries)} 个文件：{_inventory(archive)}）")
 
         script_path = "script.vns" if script_directory is not None else (entry.name if entry else "script.vns")
         return (Detected(root, archive_url, script_path, title, warnings), None)
@@ -148,6 +164,11 @@ def make_archive(path: Path, script: str = SCRIPT, *, name: str = "script.vns") 
     path.parent.mkdir(parents=True, exist_ok=True)
     write_xp3(path, [Entry(name, script.encode("utf-8")),
                      Entry("bg/room.png", b"\x89PNG" + bytes(400))])
+
+
+def make_archive_files(path: Path, files: dict[str, bytes]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_xp3(path, [Entry(n, d) for n, d in files.items()])
 
 
 def run_tests() -> int:
@@ -222,6 +243,20 @@ def run_tests() -> int:
         make_archive(g / "b.xp3", "@title B\n@end")
         game, reason = detect(g)
         check("多个封包取名字最小的", game and rel(game.archive) == "g11/a.xp3", reason)
+
+        print("原版 KiriKiri 封包（这是用户最可能扔进来的东西）")
+        g = tmp / "g12"; g.mkdir()
+        make_archive_files(g / "data.xp3", {
+            "first.ks": "[image storage=bg layer=base]\n测试[p]".encode("utf-8"),
+            "scene/ch2.ks": "[jump target=*start]".encode("utf-8"),
+            "startup.tjs": b"// KAG config",
+            "bg/school.tlg": bytes(900),
+            "bgm/theme.ogg": b"OggS" + bytes(300),
+        })
+        game, reason = detect(g)
+        check("原版 KR 包不识别，但说明是原版脚本", game is None and "原版 KiriKiri" in (reason or ""), str(reason))
+        check("统计出 .ks/.tjs 数量", "3 个 .ks/.tjs" in (reason or ""), str(reason))
+        check("统计出主要扩展名", ".tlg×1" in (reason or "") and ".ogg×1" in (reason or ""), str(reason))
 
     if FAILURES:
         print(f"\n{len(FAILURES)} 个断言失败：{FAILURES}")
